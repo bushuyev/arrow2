@@ -73,9 +73,18 @@ pub trait Array: Send + Sync + dyn_clone::DynClone + 'static {
     /// Panics iff `i >= self.len()`.
     #[inline]
     fn is_null(&self, i: usize) -> bool {
+        assert!(i < self.len());
+        unsafe { self.is_null_unchecked(i) }
+    }
+
+    /// Returns whether slot `i` is null.
+    /// # Safety
+    /// The caller must ensure `i < self.len()`
+    #[inline]
+    unsafe fn is_null_unchecked(&self, i: usize) -> bool {
         self.validity()
             .as_ref()
-            .map(|x| !x.get_bit(i))
+            .map(|x| !x.get_bit_unchecked(i))
             .unwrap_or(false)
     }
 
@@ -528,8 +537,8 @@ macro_rules! impl_sliced {
         /// The caller must ensure that `offset + length <= self.len()`.
         #[inline]
         #[must_use]
-        pub fn sliced_unchecked(mut self, offset: usize, length: usize) -> Self {
-            unsafe { self.slice_unchecked(offset, length) };
+        pub unsafe fn sliced_unchecked(mut self, offset: usize, length: usize) -> Self {
+            self.slice_unchecked(offset, length);
             self
         }
     };

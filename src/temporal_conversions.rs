@@ -2,7 +2,7 @@
 
 use chrono::{
     format::{parse, Parsed, StrftimeItems},
-    Datelike, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime,
+    Datelike, Duration, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime,
 };
 
 use crate::error::Result;
@@ -32,14 +32,25 @@ pub const EPOCH_DAYS_FROM_CE: i32 = 719_163;
 /// converts a `i32` representing a `date32` to [`NaiveDateTime`]
 #[inline]
 pub fn date32_to_datetime(v: i32) -> NaiveDateTime {
+    date32_to_datetime_opt(v).expect("invalid or out-of-range datetime")
+}
+
+/// converts a `i32` representing a `date32` to [`NaiveDateTime`]
+#[inline]
+pub fn date32_to_datetime_opt(v: i32) -> Option<NaiveDateTime> {
     NaiveDateTime::from_timestamp_opt(v as i64 * SECONDS_IN_DAY, 0)
-        .expect("invalid or out-of-range datetime")
 }
 
 /// converts a `i32` representing a `date32` to [`NaiveDate`]
 #[inline]
 pub fn date32_to_date(days: i32) -> NaiveDate {
-    NaiveDate::from_num_days_from_ce_opt(EPOCH_DAYS_FROM_CE + days).expect("out-of-range date")
+    date32_to_date_opt(days).expect("out-of-range date")
+}
+
+/// converts a `i32` representing a `date32` to [`NaiveDate`]
+#[inline]
+pub fn date32_to_date_opt(days: i32) -> Option<NaiveDate> {
+    NaiveDate::from_num_days_from_ce_opt(EPOCH_DAYS_FROM_CE + days)
 }
 
 /// converts a `i64` representing a `date64` to [`NaiveDateTime`]
@@ -66,6 +77,30 @@ pub fn time32s_to_time(v: i32) -> NaiveTime {
     NaiveTime::from_num_seconds_from_midnight_opt(v as u32, 0).expect("invalid time")
 }
 
+/// converts a `i64` representing a `duration(s)` to [`Duration`]
+#[inline]
+pub fn duration_s_to_duration(v: i64) -> Duration {
+    Duration::seconds(v)
+}
+
+/// converts a `i64` representing a `duration(ms)` to [`Duration`]
+#[inline]
+pub fn duration_ms_to_duration(v: i64) -> Duration {
+    Duration::milliseconds(v)
+}
+
+/// converts a `i64` representing a `duration(us)` to [`Duration`]
+#[inline]
+pub fn duration_us_to_duration(v: i64) -> Duration {
+    Duration::microseconds(v)
+}
+
+/// converts a `i64` representing a `duration(ns)` to [`Duration`]
+#[inline]
+pub fn duration_ns_to_duration(v: i64) -> Duration {
+    Duration::nanoseconds(v)
+}
+
 /// converts a `i32` representing a `time32(ms)` to [`NaiveTime`]
 #[inline]
 pub fn time32ms_to_time(v: i32) -> NaiveTime {
@@ -81,6 +116,12 @@ pub fn time32ms_to_time(v: i32) -> NaiveTime {
 /// converts a `i64` representing a `time64(us)` to [`NaiveTime`]
 #[inline]
 pub fn time64us_to_time(v: i64) -> NaiveTime {
+    time64us_to_time_opt(v).expect("invalid time")
+}
+
+/// converts a `i64` representing a `time64(us)` to [`NaiveTime`]
+#[inline]
+pub fn time64us_to_time_opt(v: i64) -> Option<NaiveTime> {
     NaiveTime::from_num_seconds_from_midnight_opt(
         // extract seconds from microseconds
         (v / MICROSECONDS) as u32,
@@ -88,30 +129,46 @@ pub fn time64us_to_time(v: i64) -> NaiveTime {
         // nanoseconds
         (v % MICROSECONDS * MILLISECONDS) as u32,
     )
-    .expect("invalid time")
 }
 
 /// converts a `i64` representing a `time64(ns)` to [`NaiveTime`]
 #[inline]
 pub fn time64ns_to_time(v: i64) -> NaiveTime {
+    time64ns_to_time_opt(v).expect("invalid time")
+}
+
+/// converts a `i64` representing a `time64(ns)` to [`NaiveTime`]
+#[inline]
+pub fn time64ns_to_time_opt(v: i64) -> Option<NaiveTime> {
     NaiveTime::from_num_seconds_from_midnight_opt(
         // extract seconds from nanoseconds
         (v / NANOSECONDS) as u32,
         // discard extracted seconds
         (v % NANOSECONDS) as u32,
     )
-    .expect("invalid time")
 }
 
 /// converts a `i64` representing a `timestamp(s)` to [`NaiveDateTime`]
 #[inline]
 pub fn timestamp_s_to_datetime(seconds: i64) -> NaiveDateTime {
-    NaiveDateTime::from_timestamp_opt(seconds, 0).expect("invalid or out-of-range datetime")
+    timestamp_s_to_datetime_opt(seconds).expect("invalid or out-of-range datetime")
+}
+
+/// converts a `i64` representing a `timestamp(s)` to [`NaiveDateTime`]
+#[inline]
+pub fn timestamp_s_to_datetime_opt(seconds: i64) -> Option<NaiveDateTime> {
+    NaiveDateTime::from_timestamp_opt(seconds, 0)
 }
 
 /// converts a `i64` representing a `timestamp(ms)` to [`NaiveDateTime`]
 #[inline]
 pub fn timestamp_ms_to_datetime(v: i64) -> NaiveDateTime {
+    timestamp_ms_to_datetime_opt(v).expect("invalid or out-of-range datetime")
+}
+
+/// converts a `i64` representing a `timestamp(ms)` to [`NaiveDateTime`]
+#[inline]
+pub fn timestamp_ms_to_datetime_opt(v: i64) -> Option<NaiveDateTime> {
     if v >= 0 {
         NaiveDateTime::from_timestamp_opt(
             // extract seconds from milliseconds
@@ -133,12 +190,17 @@ pub fn timestamp_ms_to_datetime(v: i64) -> NaiveDateTime {
             )
         }
     }
-    .expect("invalid or out-of-range datetime")
 }
 
 /// converts a `i64` representing a `timestamp(us)` to [`NaiveDateTime`]
 #[inline]
 pub fn timestamp_us_to_datetime(v: i64) -> NaiveDateTime {
+    timestamp_us_to_datetime_opt(v).expect("invalid or out-of-range datetime")
+}
+
+/// converts a `i64` representing a `timestamp(us)` to [`NaiveDateTime`]
+#[inline]
+pub fn timestamp_us_to_datetime_opt(v: i64) -> Option<NaiveDateTime> {
     if v >= 0 {
         NaiveDateTime::from_timestamp_opt(
             // extract seconds from microseconds
@@ -160,12 +222,17 @@ pub fn timestamp_us_to_datetime(v: i64) -> NaiveDateTime {
             )
         }
     }
-    .expect("invalid or out-of-range datetime")
 }
 
 /// converts a `i64` representing a `timestamp(ns)` to [`NaiveDateTime`]
 #[inline]
 pub fn timestamp_ns_to_datetime(v: i64) -> NaiveDateTime {
+    timestamp_ns_to_datetime_opt(v).expect("invalid or out-of-range datetime")
+}
+
+/// converts a `i64` representing a `timestamp(ns)` to [`NaiveDateTime`]
+#[inline]
+pub fn timestamp_ns_to_datetime_opt(v: i64) -> Option<NaiveDateTime> {
     if v >= 0 {
         NaiveDateTime::from_timestamp_opt(
             // extract seconds from nanoseconds
@@ -187,7 +254,6 @@ pub fn timestamp_ns_to_datetime(v: i64) -> NaiveDateTime {
             )
         }
     }
-    .expect("invalid or out-of-range datetime")
 }
 
 /// Converts a timestamp in `time_unit` and `timezone` into [`chrono::DateTime`].
